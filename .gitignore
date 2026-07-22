@@ -1,0 +1,30 @@
+# Runtime/build artifacts
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+build/
+dist/
+install/
+log/
+logs/
+node_modules/
+
+# Large datasets and generated training logs
+datasets/
+*.hdf5
+*.bag
+*.db3
+
+# Downloaded model checkpoints and licensed body models
+checkpoints/
+body_models/
+*.ckpt
+*.pth
+SMPL*
+SMPLX*
+
+# Isaac Sim local runtime
+_isaac_sim/
+isaac-sim/

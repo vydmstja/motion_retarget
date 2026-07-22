@@ -1,0 +1,243 @@
+exit
+clear
+python scripts/reinforcement_learning/rsl_rl/train.py \
+clear
+python scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Velocity-Flat-K1-Rev1-v0   --num_envs 4096   --headless
+python scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Velocity-Flat-K1-Rev1-Play-v0   --num_envs 16
+clear
+python scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Velocity-Flat-K1-Rev1-Play-v0   --num_envs 16
+echo $ROS_DOMAIN_ID
+ros2 topic list
+python - <<'PY'
+import os, time
+from robotis_dds_python.tools.topic_manager import TopicManager
+from robotis_dds_python.idl.trajectory_msgs.msg import JointTrajectory_
+
+domain_id = int(os.getenv("ROS_DOMAIN_ID", 30))
+tm = TopicManager(domain_id=domain_id)
+
+reader = tm.topic_reader(
+    topic_name="/leader/joint_trajectory_command_broadcaster_right/joint_trajectory",
+    topic_type=JointTrajectory_,
+)
+
+print(f"Listening on domain {domain_id}...")
+start = time.time()
+
+while time.time() - start < 10:
+    got = False
+    for msg in reader.take_iter():
+        got = True
+        print("GOT MESSAGE")
+        print("joint_names:", list(msg.joint_names))
+        if msg.points:
+            print("positions:", list(msg.points[-1].positions))
+        raise SystemExit
+    if not got:
+        time.sleep(0.01)
+
+print("No message received in 10 sec")
+PY
+
+clear
+export ROS_DOMAIN_ID=30
+export CYCLONEDDS_URI=file:///root/cyclonedds_tailscale.xml
+/workspace/cyclo_lab/third_party/IsaacLab/_isaac_sim/python.sh - <<'PY'
+import os, time
+from robotis_dds_python.tools.topic_manager import TopicManager
+from robotis_dds_python.idl.sensor_msgs.msg import JointState_
+
+tm = TopicManager(domain_id=30)
+reader = tm.topic_reader("/leader/joint_states", JointState_)
+
+print("Listening...")
+start = time.time()
+while time.time() - start < 10:
+    for msg in reader.take_iter():
+        print("GOT")
+        print(list(msg.name)[:8])
+        print([round(x, 4) for x in list(msg.position)[:8]])
+        raise SystemExit
+    time.sleep(0.01)
+
+print("NO DATA")
+PY
+
+echo $RMW_IMPLEMENTATION
+칟ㅁㄱ
+clear
+nano ~/.bashrc
+export CYCLONEDDS_URI=file:///root/cyclonedds_tailscale.xml
+vim ~/.bashrc
+ros2 topic list
+clear
+echo $ROS_DOMAIN_ID
+echo $RMW_IMPLEMENTATION
+echo $CYCLONEDDS_URI
+/workspace/cyclo_lab/third_party/IsaacLab/_isaac_sim/python.sh - <<'PY'
+import time
+from robotis_dds_python.tools.topic_manager import TopicManager
+from robotis_dds_python.idl.sensor_msgs.msg import JointState_
+
+reader = TopicManager(domain_id=30).topic_reader("/leader/joint_states", JointState_)
+
+print("Listening...")
+start = time.time()
+while time.time() - start < 10:
+    for msg in reader.take_iter():
+        print("GOT")
+        print(list(msg.name)[:8])
+        print([round(x, 4) for x in list(msg.position)[:8]])
+        raise SystemExit
+    time.sleep(0.01)
+
+print("NO DATA")
+PY
+
+clear
+python scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Velocity-Flat-K1-Rev1-Play-v0   --num_envs 16
+echo $DISPLAY
+export DISPLAY=:10.0
+echo $DISPLAY
+python scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Velocity-Flat-K1-Rev1-Play-v0   --num_envs 16
+clear
+echo $ROS_DOMAIN_ID
+echo $RMW_IMPLEMENTATION
+clear
+python scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_raw.hdf5   --num_demos 10   --enable_cameras
+clear
+python scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_raw.hdf5   --num_demos 10   --enable_cameras
+clear
+python scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_raw.hdf5   --num_demos 10   --enable_cameras
+clear
+python scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_raw.hdf5   --num_demos 10   --enable_cameras
+clear
+echo $ROS_DOMAIN_ID
+echo $RMW_IMPLEMENTATION
+./third_party/IsaacLab/_isaac_sim/python.sh scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_raw.hdf5   --num_demos 10   --enable_cameras
+clear
+python scripts/sim2real/imitation_learning/recorder/record_demos.py   --task=Cyclo-Real-Pick-Place-FFW-SG2-v0   --robot_type FFW_SG2   --dataset_file ./datasets/ffw_sg2_sidecam_raw.hdf5   --num_demos 4   --enable_cameras
+python - <<'PY'
+import h5py
+path = "./datasets/ffw_sg2_sidecam_raw.hdf5"
+with h5py.File(path, "r") as f:
+    demos = list(f["data"].keys())
+    print("demos:", demos)
+    for d in demos:
+        print(d, list(f["data"][d]["obs"].keys()))
+PY
+
+python scripts/sim2real/imitation_learning/mimic/action_data_converter.py   --robot_type FFW_SG2   --input_file ./datasets/ffw_sg2_sidecam_raw.hdf5   --output_file ./datasets/ffw_sg2_ik.hdf5   --action_type ik
+python scripts/sim2real/imitation_learning/mimic/annotate_demos.py   --task Cyclo-Real-Mimic-Pick-Place-FFW-SG2-v0   --auto   --input_file ./datasets/ffw_sg2_ik.hdf5   --output_file ./datasets/ffw_sg2_annotate.hdf5   --enable_cameras   --headless
+python - <<'PY'
+import h5py
+path = "./datasets/ffw_sg2_ik.hdf5"
+with h5py.File(path, "r") as f:
+    print(list(f["data"].keys()))
+    d = list(f["data"].keys())[0]
+    print("root keys:", list(f["data"][d].keys()))
+    print("obs keys:", list(f["data"][d]["obs"].keys()))
+    print("actions shape:", f["data"][d]["actions"].shape)
+PY
+
+python scripts/sim2real/imitation_learning/mimic/generate_dataset.py   --device cuda   --num_envs 10   --task Cyclo-Real-Mimic-Pick-Place-FFW-SG2-v0   --generation_num_trials 50   --input_file ./datasets/ffw_sg2_annotate.hdf5   --output_file ./datasets/ffw_sg2_generate_50.hdf5   --enable_cameras   --headless
+python - <<'PY'
+from pathlib import Path
+
+p = Path("source/cyclo_lab/cyclo_lab/real_world_tasks/manager_based/FFW_SG2/pick_place/pick_place_mimic_env_cfg.py")
+s = p.read_text()
+
+s = s.replace(
+    "subtask_term_offset_range=(10, 20),",
+    "subtask_term_offset_range=(0, 1),",
+)
+
+s = s.replace(
+    "subtask_term_offset_range=(5, 10),",
+    "subtask_term_offset_range=(0, 1),",
+)
+
+p.write_text(s)
+print("updated subtask offset ranges to (0, 1)")
+PY
+
+rm -f ./datasets/ffw_sg2_generate_50.hdf5
+python scripts/sim2real/imitation_learning/mimic/generate_dataset.py   --device cuda   --num_envs 10   --task Cyclo-Real-Mimic-Pick-Place-FFW-SG2-v0   --generation_num_trials 50   --input_file ./datasets/ffw_sg2_annotate.hdf5   --output_file ./datasets/ffw_sg2_generate_50.hdf5   --enable_cameras   --headless
+pkill -f 'scripts/sim2real/imitation_learning/mimic/generate_dataset.py' || true
+rm -f ./datasets/ffw_sg2_generate_test.hdf5
+python scripts/sim2real/imitation_learning/mimic/generate_dataset.py   --device cuda   --num_envs 1   --task Cyclo-Real-Mimic-Pick-Place-FFW-SG2-v0   --generation_num_trials 5   --input_file ./datasets/ffw_sg2_annotate.hdf5   --output_file ./datasets/ffw_sg2_generate_test.hdf5   --enable_cameras   --headless
+rm -f ./datasets/ffw_sg2_generate_test.hdf5
+python scripts/sim2real/imitation_learning/mimic/generate_dataset.py   --device cuda   --num_envs 1   --task Cyclo-Real-Mimic-Pick-Place-FFW-SG2-v0   --generation_num_trials 5   --input_file ./datasets/ffw_sg2_annotate.hdf5   --output_file ./datasets/ffw_sg2_generate_test.hdf5   --enable_cameras   --headless
+python - <<'PY'
+import h5py, os
+path = "./datasets/ffw_sg2_generate_test.hdf5"
+print("exists:", os.path.exists(path))
+if os.path.exists(path):
+    with h5py.File(path, "r") as f:
+        demos = list(f["data"].keys())
+        print("num demos:", len(demos))
+        print(demos)
+PY
+
+python scripts/sim2real/imitation_learning/mimic/action_data_converter.py   --robot_type FFW_SG2   --input_file ./datasets/ffw_sg2_generate_test.hdf5   --output_file ./datasets/ffw_sg2_final_test.hdf5   --action_type joint
+python - <<'PY'
+import h5py
+path = "./datasets/ffw_sg2_final_test.hdf5"
+with h5py.File(path, "r") as f:
+    demos = list(f["data"].keys())
+    print("num demos:", len(demos))
+    d = demos[0]
+    print("root keys:", list(f["data"][d].keys()))
+    print("obs keys:", list(f["data"][d]["obs"].keys()))
+    print("actions shape:", f["data"][d]["actions"].shape)
+PY
+
+exiy
+exit
+clear
+cd ..
+exit
+cd Eunseom
+ls
+cd ..
+ls
+cd root/
+ls
+exit
+ls
+cd ..
+ls
+cd home/
+ls
+cd ubuntu/
+ls
+cd ~
+ls
+clear
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 64   --headless   --max_iterations 1   --run_name redred_44_60_smoke
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 64   --headless   --max_iterations 1 \
+clear
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 4096   --headless   --max_iterations 100   --run_name redred_44_60_4096env_test
+ls -lt logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White-Play   --num_envs 16
+echo $DISPLAY
+export DISPLAY=:10.0
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White-Play   --num_envs 16
+find logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white -name "model_*.pt" | sort -V | tail
+ls -lt logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white
+pkill -f isaac-sim || true
+pkill -f kit || true
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White-Play   --num_envs 1   --checkpoint logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white/redred_44_60_4096env_test/model_99.pt
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 4096   --headless   --max_iterations 3000   --run_name redred_44_60_4096env
+clear
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 4096   --headless   --max_iterations 3000   --run_name redred_44_60_4096env_3000it
+echo $DISPLAY
+find logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white -name "model_*.pt" | sort -V | tail -20
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White-Play   --num_envs 1   --checkpoint logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white/2026-07-15_16-53-21_redred_44_60_4096env_3000it/model_2999.pt
+clear
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 4096   --headless   --max_iterations 3000   --run_name redred_44_60_corrected_4096env_3000it
+find logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white -name "model_*.pt" | sort -V | tail -20
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White   --num_envs 4096   --headless   --max_iterations 3000   --run_name redred_44_60_corrected2_4096env_3000it
+echo $DISPLAY
+find logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white -name "model_*.pt" | sort -V | tail -20
+./third_party/IsaacLab/isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py   --task Cyclo-Mimic-K1-Rev1-RedRed4460White-Play   --num_envs 1   --checkpoint logs/rsl_rl/cyclo_mimic_k1_rev1_redred4460white/2026-07-16_13-27-59_redred_44_60_corrected2_4096env_3000it/model_2999.pt

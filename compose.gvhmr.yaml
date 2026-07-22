@@ -1,0 +1,25 @@
+services:
+  gvhmr:
+    build:
+      context: .
+      dockerfile: docker/gvhmr.Dockerfile
+    image: motion-retarget-gvhmr:cu121
+    container_name: motion_retarget_gvhmr
+    working_dir: /workspace/GVHMR
+    stdin_open: true
+    tty: true
+    ipc: host
+    shm_size: "16gb"
+    environment:
+      PYTHONPATH: /workspace/GVHMR
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./repos/GVHMR:/workspace/GVHMR
+      - ./videos:/workspace/videos
+      - ./outputs:/workspace/outputs
